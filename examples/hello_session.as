@@ -87,4 +87,24 @@ serwer.post("/api/raw", fn(zad) {
   )
 })
 
+
+serwer.get("/profil/:id", fn(zad) {
+  niech id = zad.parametry()["id"]
+  niech user = { "id": id, "imie": "Anna", "rola": "admin" }
+
+  zwroc Zubr::Odpowiedz.zaleznie_od(zad, {
+    "json": fn() {
+      zwroc Zubr::Odpowiedz.json(200, user)
+    },
+    "html": fn() {
+      zwroc Zubr::Odpowiedz.html(200,
+        "<h1>" + user["imie"] + "</h1><p>ID: " + user["id"] + "</p>")
+    },
+    "tekst": fn() {
+      zwroc Zubr::Odpowiedz.tekst(200,
+        "Imie: " + user["imie"] + "\nID: " + user["id"] + "\n")
+    }
+  })
+})
+
 serwer.start()

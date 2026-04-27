@@ -1,4 +1,125 @@
 modul Zubr {
+  modul Negocjacja {
+    funkcja alias_na_mime(alias) {
+      jesli alias == "json" to zwroc "application/json"
+      jesli alias == "html" to zwroc "text/html"
+      jesli alias == "tekst" to zwroc "text/plain"
+      jesli alias == "xml" to zwroc "application/xml"
+      jesli alias == "csv" to zwroc "text/csv"
+      jesli alias == "binarny" to zwroc "application/octet-stream"
+      zwroc alias
+    }
+
+    funkcja parsuj_accept(header) {
+      jesli header == nic to zwroc []
+      jesli header == "" to zwroc []
+
+      niech wynik = []
+      niech pozycje = header.rozdziel(",")
+
+      dla niech k = 0; pozycje.dlg(); 1 {
+        niech pozycja = pozycje[k].wyczysc()
+        niech parts = pozycja.rozdziel(";")
+        niech mime = parts[0].wyczysc()
+        niech q = 1.0
+
+        dla niech p = 1; parts.dlg(); 1 {
+          niech param = parts[p].wyczysc()
+          niech idx = znajdz_rowna_sie(param)
+          jesli idx > 0 {
+            niech klucz = param.wycinek(0, idx - 1).wyczysc()
+            niech wartosc = param.wycinek(idx + 1, param.dlg() - 1).wyczysc()
+            jesli klucz == "q" {
+              niech parsed = wartosc.liczba()
+              jesli parsed != nic to q = parsed
+            }
+          }
+        }
+
+        wynik << { "mime": mime, "q": q }
+      }
+
+      zwroc wynik
+    }
+
+    prywatna funkcja znajdz_rowna_sie(s) {
+      dla niech k = 0; s.dlg(); 1 {
+        jesli s.indeks(k) == "=" to zwroc k
+      }
+      zwroc -1
+    }
+
+    # Returns the best alias from `dostepne_aliasy` based on Accept header,
+    # or the first alias if no Accept or no match.
+    funkcja wybierz_format(accept_header, dostepne_aliasy) {
+      niech preferencje = parsuj_accept(accept_header)
+
+      jesli preferencje.dlg() == 0 {
+        jesli dostepne_aliasy.dlg() > 0 to zwroc dostepne_aliasy[0]
+        zwroc nic
+      }
+
+      # Iterate preferences in their listed order, preferring high q first.
+      # Sort by q descending — simple bubble pass.
+      sortuj_po_q(preferencje)
+
+      dla niech p = 0; preferencje.dlg(); 1 {
+        niech pref_mime = preferencje[p]["mime"]
+
+        dla niech a = 0; dostepne_aliasy.dlg(); 1 {
+          niech alias = dostepne_aliasy[a]
+          niech alias_mime = alias_na_mime(alias)
+          jesli pasuje_mime(pref_mime, alias_mime) to zwroc alias
+        }
+      }
+
+      # No match — return first available as fallback.
+      jesli dostepne_aliasy.dlg() > 0 to zwroc dostepne_aliasy[0]
+      zwroc nic
+    }
+
+    prywatna funkcja pasuje_mime(zadany, oferowany) {
+      jesli zadany == "*/*" to zwroc prawda
+      jesli zadany == oferowany to zwroc prawda
+
+      # type/* matches any subtype of that type.
+      niech idx = znajdz_ukosnik(zadany)
+      jesli idx > 0 {
+        niech typ_zadany = zadany.wycinek(0, idx - 1)
+        niech subtyp = zadany.wycinek(idx + 1, zadany.dlg() - 1)
+        jesli subtyp == "*" {
+          niech idx2 = znajdz_ukosnik(oferowany)
+          jesli idx2 > 0 {
+            niech typ_oferowany = oferowany.wycinek(0, idx2 - 1)
+            zwroc typ_zadany == typ_oferowany
+          }
+        }
+      }
+      zwroc falsz
+    }
+
+    prywatna funkcja znajdz_ukosnik(s) {
+      dla niech k = 0; s.dlg(); 1 {
+        jesli s.indeks(k) == "/" to zwroc k
+      }
+      zwroc -1
+    }
+
+    prywatna funkcja sortuj_po_q(arr) {
+      niech n = arr.dlg()
+      dla niech k = 0; n - 1; 1 {
+        dla niech j = 0; n - k - 1; 1 {
+          jesli arr[j]["q"] < arr[j + 1]["q"] {
+            niech tmp = arr[j]
+            arr[j] = arr[j + 1]
+            arr[j + 1] = tmp
+          }
+        }
+      }
+    }
+  }
+
+
   klasa Odpowiedz {
     funkcja konstruktor(status, tresc) {
       niech @status = status
@@ -210,6 +331,20 @@ modul Zubr {
         }
         zwroc chunk
       }
+    }
+
+    statyczna funkcja zaleznie_od(zad, mapa) {
+      niech accept = zad.naglowek("accept")
+      niech klucze = Json.klucze(mapa)
+
+      niech wybrany = Zubr::Negocjacja::wybierz_format(accept, klucze)
+
+      jesli wybrany == nic {
+        zwroc Odpowiedz.tekst(406, "Not Acceptable")
+      }
+
+      niech callback = mapa[wybrany]
+      zwroc callback()
     }
   }
 
