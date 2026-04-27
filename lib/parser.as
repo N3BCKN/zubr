@@ -35,6 +35,7 @@ modul Zubr {
         niech @json_cache = nic
         niech @ciasteczka_cache = nic
         niech @sesja = nic
+        niech @dane_cache = nic
       }
 
       funkcja metoda() { zwroc @metoda }
@@ -49,6 +50,29 @@ modul Zubr {
 
       funkcja naglowek(nazwa) {
         zwroc @naglowki[nazwa.malymi()]
+      }
+
+      funkcja dane() {
+        jesli @dane_cache != nic to zwroc @dane_cache
+        @dane_cache = parsuj_dane(sam)
+        zwroc @dane_cache
+      }
+
+      funkcja pole(klucz) {
+        niech d = sam.dane()
+        jesli d == nic to zwroc nic
+        # Hash check.
+        proba {
+          zwroc d[klucz]
+        } zlap (_) {
+          zwroc nic
+        }
+      }
+
+      funkcja pole_lub(klucz, domyslna) {
+        niech v = sam.pole(klucz)
+        jesli v == nic to zwroc domyslna
+        zwroc v
       }
 
       funkcja ustaw_sesja(s) {
@@ -288,7 +312,33 @@ modul Zubr {
       zwroc wynik
     }
 
-    # Helper — finds first occurrence of single char.
+    funkcja parsuj_dane(zad) {
+      niech tresc = zad.tresc()
+      jesli tresc == "" to zwroc nic
+
+      niech ct = zad.naglowek("content-type")
+      jesli ct == nic to zwroc tresc
+
+      niech ct_lower = ct.malymi()
+
+      jesli ct_lower.zawiera("application/json") {
+        proba {
+          zwroc Json.parsuj(tresc)
+        } zlap (_) {
+          zwroc tresc
+        }
+      }
+
+      jesli ct_lower.zawiera("application/x-www-form-urlencoded") {
+        zwroc Http.parsuj_zapytanie(tresc)
+      }
+
+      jesli ct_lower.zawiera("text/") to zwroc tresc
+
+      zwroc tresc
+    }
+
+    # Helper — finds first occurrence of single char
     prywatna funkcja znajdz_znak(s, znak) {
       dla niech k = 0; s.dlg(); 1 {
         jesli s.indeks(k) == znak to zwroc k

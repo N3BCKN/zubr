@@ -61,4 +61,30 @@ serwer.get("/sesja", fn(zad) {
   })
 })
 
+serwer.post("/api/echo_json", fn(zad) {
+  niech d = zad.dane()
+  jesli d == nic to zwroc Zubr::Odpowiedz.tekst(400, "Brak body\n")
+  zwroc Zubr::Odpowiedz.json(200, {
+    "otrzymano": d,
+    "typ_content": zad.naglowek("content-type")
+  })
+})
+
+serwer.post("/api/formularz", fn(zad) {
+  niech imie = zad.pole_lub("imie", "(brak)")
+  niech wiek = zad.pole_lub("wiek", "(brak)")
+  zwroc Zubr::Odpowiedz.tekst(200, "Imie: " + imie + ", Wiek: " + wiek + "\n")
+})
+
+serwer.post("/api/raw", fn(zad) {
+  niech d = zad.dane()
+  niech typ_d = "nieznany"
+  jesli d != nic to typ_d = d.typ()
+  zwroc Zubr::Odpowiedz.tekst(200,
+    "Content-Type: " + zad.naglowek("content-type") + "\n" +
+    "Typ sparsowany: " + typ_d + "\n" +
+    "Raw: " + zad.tresc() + "\n"
+  )
+})
+
 serwer.start()
