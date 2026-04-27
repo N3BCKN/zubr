@@ -14,13 +14,27 @@ modul Zubr {
       niech @host = "0.0.0.0"
       niech @router = Zubr::Router::SilnikRoutingu.nowy()
       niech @config = Zubr::Polaczenie::Konfiguracja.nowy()
+      niech @middleware_lista = []
       @config.ustaw_logger(Zubr::Logger::domyslny())
     }
+
 
     funkcja port() { zwroc @port }
     funkcja host() { zwroc @host }
     funkcja router() { zwroc @router }
     funkcja config() { zwroc @config }
+
+
+    funkcja middleware(mw) {
+      @middleware_lista << mw
+      zwroc sam
+    }
+
+    funkcja pliki_statyczne(prefix_url, katalog_dyskowy) {
+      niech h = Zubr::PlikiStatyczne::handler(prefix_url, katalog_dyskowy)
+      sam.trasa("GET", prefix_url + "/*", h)
+      zwroc sam
+    }
 
     funkcja ustaw_host(h) {
       @host = h
@@ -61,9 +75,11 @@ modul Zubr {
       niech router_ref = @router
       niech config_ref = @config
 
-      niech dispatcher = fn(zad) {
+      niech finalny = fn(zad) {
         zwroc router_ref.dispatch(zad)
       }
+
+      niech dispatcher = Zubr::Middleware::zbuduj(@middleware_lista, finalny)
 
       srv.uruchom_petle(fn(klient) {
         Zubr::Polaczenie::obsluz(klient, dispatcher, config_ref)
