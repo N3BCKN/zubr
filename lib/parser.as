@@ -33,6 +33,8 @@ modul Zubr {
         niech @tresc = ""
         niech @parametry = {}
         niech @json_cache = nic
+        niech @ciasteczka_cache = nic
+        niech @sesja = nic
       }
 
       funkcja metoda() { zwroc @metoda }
@@ -43,9 +45,15 @@ modul Zubr {
       funkcja naglowki() { zwroc @naglowki }
       funkcja tresc() { zwroc @tresc }
       funkcja parametry() { zwroc @parametry }
+      funkcja sesja() { zwroc @sesja }
 
       funkcja naglowek(nazwa) {
         zwroc @naglowki[nazwa.malymi()]
+      }
+
+      funkcja ustaw_sesja(s) {
+        @sesja = s
+        zwroc sam
       }
 
       funkcja ustaw_metoda(m) { 
@@ -96,6 +104,23 @@ modul Zubr {
         jesli !ct.malymi().zawiera("application/json") to rzuc BladWykonania.nowy("Content-Type nie jest JSON")
         @json_cache = Json.parsuj(@tresc)
         zwroc @json_cache
+      }
+
+      # Lazy-parsed cookies. Returns hash, never nic.
+      funkcja ciasteczka() {
+        jesli @ciasteczka_cache != nic to zwroc @ciasteczka_cache
+        niech header = sam.naglowek("cookie")
+        jesli header == nic {
+          @ciasteczka_cache = {}
+          zwroc @ciasteczka_cache
+        }
+        @ciasteczka_cache = parsuj_ciasteczka(header)
+        zwroc @ciasteczka_cache
+      }
+
+      funkcja ciasteczko(nazwa) {
+        niech c = sam.ciasteczka()
+        zwroc c[nazwa]
       }
     }
 
@@ -232,6 +257,43 @@ modul Zubr {
       jesli tresc == nic to rzuc BladParsera.nowy(400, "Body shorter than Content-Length")
       jesli tresc.dlg() < dlugosc to rzuc BladParsera.nowy(400, "Body shorter than Content-Length")
       zwroc tresc
+    }
+
+    funkcja parsuj_ciasteczka(header) {
+      niech wynik = {}
+      niech pary = header.rozdziel(";")
+
+      dla niech k = 0; pary.dlg(); 1 {
+        niech para = pary[k].wyczysc()
+        jesli para == "" to nastepny
+
+        niech idx = znajdz_znak(para, "=")
+        jesli idx == -1 {
+          wynik[para] = ""
+        } albo {
+          niech nazwa = para.wycinek(0, idx - 1).wyczysc()
+          niech wartosc = ""
+          jesli idx + 1 < para.dlg() to wartosc = para.wycinek(idx + 1, para.dlg() - 1)
+          # Strip surrounding quotes if present.
+          jesli wartosc.dlg() >= 2 {
+            niech pierwszy = wartosc.indeks(0)
+            niech ostatni = wartosc.indeks(wartosc.dlg() - 1)
+            jesli pierwszy == "\"" i ostatni == "\"" {
+              wartosc = wartosc.wycinek(1, wartosc.dlg() - 2)
+            }
+          }
+          wynik[nazwa] = wartosc
+        }
+      }
+      zwroc wynik
+    }
+
+    # Helper — finds first occurrence of single char.
+    prywatna funkcja znajdz_znak(s, znak) {
+      dla niech k = 0; s.dlg(); 1 {
+        jesli s.indeks(k) == znak to zwroc k
+      }
+      zwroc -1
     }
   }
 }

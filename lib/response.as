@@ -9,6 +9,7 @@ modul Zubr {
       }
       niech @naglowki = {}
       niech @zamknij_polaczenie = falsz
+      niech @ciasteczka_set = []
       niech @stream_source = nic
       niech @stream_size = 0
     }
@@ -89,8 +90,58 @@ modul Zubr {
         bufor = bufor + k + ": " + @naglowki[k] + "\r\n"
       }
 
+      # Render each Set-Cookie as a separate header line.
+      dla niech k = 0; @ciasteczka_set.dlg(); 1 {
+        bufor = bufor + "Set-Cookie: " + @ciasteczka_set[k] + "\r\n"
+      }
+
       bufor = bufor + "\r\n"
       zwroc bufor
+    }
+
+    # opcje: hash with optional keys: max_age, expires, path, domain, http_only, secure, same_site
+    funkcja ustaw_ciasteczko(nazwa, wartosc, opcje) {
+      jesli opcje == nic to opcje = {}
+
+      niech header = nazwa + "=" + koduj_wartosc_ciasteczka(wartosc)
+
+      jesli opcje["max_age"] != nic {
+        header = header + "; Max-Age=" + opcje["max_age"].napis()
+      }
+      jesli opcje["expires"] != nic {
+        header = header + "; Expires=" + opcje["expires"]
+      }
+      jesli opcje["path"] != nic {
+        header = header + "; Path=" + opcje["path"]
+      } albo {
+        header = header + "; Path=/"
+      }
+      jesli opcje["domain"] != nic {
+        header = header + "; Domain=" + opcje["domain"]
+      }
+      jesli opcje["same_site"] != nic {
+        header = header + "; SameSite=" + opcje["same_site"]
+      }
+      jesli opcje["http_only"] == prawda {
+        header = header + "; HttpOnly"
+      }
+      jesli opcje["secure"] == prawda {
+        header = header + "; Secure"
+      }
+
+      @ciasteczka_set << header
+      zwroc sam
+    }
+
+    # Convenience: delete a cookie by setting Max-Age=0.
+    funkcja usun_ciasteczko(nazwa) {
+      zwroc sam.ustaw_ciasteczko(nazwa, "", { "max_age": 0, "path": "/" })
+    }
+
+    prywatna funkcja koduj_wartosc_ciasteczka(v) {
+        niech s = v
+        jesli v.typ() != "napis" to s = v.napis()
+        zwroc Http.koduj_url(s)
     }
 
     statyczna funkcja tekst(status, t) {
