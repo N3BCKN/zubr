@@ -81,7 +81,11 @@ modul Zubr {
 
           niech wyslij_ok = prawda
           proba {
-            socket.wyslij(odp.do_bajtow())
+            jesli odp.czy_streaming() {
+              wyslij_streaming(socket, odp)
+            } albo {
+              socket.wyslij(odp.do_bajtow())
+            }
           } zlap (_) {
             wyslij_ok = falsz
           }
@@ -106,6 +110,18 @@ modul Zubr {
         }
       }
       # Socket closure handled by SerwerTcp::uruchom_petle ensure block.
+    }
+
+    funkcja wyslij_streaming(socket, odp) {
+      socket.wyslij(odp.zbuduj_naglowki())
+
+      niech source = odp.stream_source()
+      dopoki prawda {
+        niech chunk = source()
+        jesli chunk == nic to zakoncz
+        jesli chunk == "" to zakoncz
+        socket.wyslij(chunk)
+      }
     }
 
     funkcja wyslij_blad_parsera(socket, e) {

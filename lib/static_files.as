@@ -26,7 +26,7 @@ modul Zubr {
         proba {
           niech kanoniczna = Plik.rzeczywista_sciezka(pelna)
           jesli !zaczyna_sie(kanoniczna, katalog_kanoniczny) to zwroc Zubr::Odpowiedz.tekst(403, "Forbidden")
-          
+
           pelna = kanoniczna
         } zlap (_) {
           zwroc Zubr::Odpowiedz.tekst(404, "Not Found")
@@ -60,12 +60,8 @@ modul Zubr {
           }
         }
 
-        # Serve full content.
-        niech tresc = Plik.czytaj(pelna)
-        niech mime = Zubr::Codes::mime_z_rozszerzenia(Plik.rozszerzenie(pelna))
-
-        niech odp = Zubr::Odpowiedz.nowy(200, tresc)
-        odp.ustaw_typ(mime)
+        # Serve full content
+        niech odp = Zubr::Odpowiedz.plik(pelna)
         odp.naglowek("ETag", etag)
         odp.naglowek("Last-Modified", mtime.httpdate())
         zwroc odp
