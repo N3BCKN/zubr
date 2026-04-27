@@ -15,6 +15,7 @@ modul Zubr {
       niech @router = Zubr::Router::SilnikRoutingu.nowy()
       niech @config = Zubr::Polaczenie::Konfiguracja.nowy()
       niech @middleware_lista = []
+      niech @stop_request = falsz
       @config.ustaw_logger(Zubr::Logger::domyslny())
     }
 
@@ -27,6 +28,11 @@ modul Zubr {
 
     funkcja middleware(mw) {
       @middleware_lista << mw
+      zwroc sam
+    }
+
+    funkcja zatrzymaj() {
+      @stop_request = prawda
       zwroc sam
     }
 
@@ -69,6 +75,7 @@ modul Zubr {
     funkcja delete(wzor, handler) { zwroc sam.trasa("DELETE", wzor, handler) }
 
     funkcja start() {
+      Zubr::_init_data_cache()
       niech srv = SerwerTcp.nowy(@port, @host)
       @config.logger().info("Zubr listening on " + @host + ":" + @port.napis())
 

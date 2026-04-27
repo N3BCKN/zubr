@@ -20,6 +20,9 @@ modul Zubr {
 
       # Returns parametry hash on match, nic on miss.
       funkcja dopasuj(metoda, sciezka) {
+        niech rzeczywista_m = metoda
+        jesli metoda == "HEAD" to rzeczywista_m = "GET"
+        jesli rzeczywista_m != @metoda i @metoda != "*" to zwroc nic
         jesli metoda != @metoda i @metoda != "*" to zwroc nic
 
         jesli @czy_statyczna {
@@ -136,38 +139,62 @@ modul Zubr {
 
       # Returns Odpowiedz. Never returns nic.
       funkcja dispatch(zad) {
-        niech metoda = zad.metoda()
+        niech metoda_oryg = zad.metoda()
+        niech metoda_lookup = metoda_oryg
+        jesli metoda_oryg == "HEAD" to metoda_lookup = "GET"
         niech sciezka = zad.sciezka()
 
+        niech odp = nic
+
         # Try static routes first — O(1) hash lookup.
-        niech klucz = metoda + " " + sciezka
+        niech klucz = metoda_lookup + " " + sciezka
         niech stat = @statyczne[klucz]
         jesli stat != nic {
           zad.ustaw_parametry({})
-          zwroc stat.handler()(zad)
+          odp = stat.handler()(zad)
         }
 
         # Then parametric routes, in registration order.
-        dla niech k = 0; @parametryczne.dlg(); 1 {
-          niech t = @parametryczne[k]
-          niech parametry = t.dopasuj(metoda, sciezka)
-          jesli parametry != nic {
-            zad.ustaw_parametry(parametry)
-            zwroc t.handler()(zad)
+        jesli odp == nic {
+          dla niech k = 0; @parametryczne.dlg(); 1 {
+            niech t = @parametryczne[k]
+            niech parametry = t.dopasuj(metoda_lookup, sciezka)
+            jesli parametry != nic {
+              zad.ustaw_parametry(parametry)
+              odp = t.handler()(zad)
+              zakoncz
+            }
           }
         }
 
         # Then regex routes.
-        dla niech k = 0; @regex_trasy.dlg(); 1 {
-          niech t = @regex_trasy[k]
-          niech parametry = t.dopasuj(metoda, sciezka)
-          jesli parametry != nic {
-            zad.ustaw_parametry(parametry)
-            zwroc t.handler()(zad)
+        jesli odp == nic {
+          dla niech k = 0; @regex_trasy.dlg(); 1 {
+            niech t = @regex_trasy[k]
+            niech parametry = t.dopasuj(metoda_lookup, sciezka)
+            jesli parametry != nic {
+              zad.ustaw_parametry(parametry)
+              odp = t.handler()(zad)
+              zakoncz
+            }
           }
         }
 
-        # No match — call user 404 or default.
+        # Match found — strip body for HEAD before returning.
+        jesli odp != nic {
+          jesli metoda_oryg == "HEAD" to odp.ustaw_tresc("")
+          zwroc odp
+        }
+
+        # No match — check if path exists for other methods (405).
+        niech inne_metody = znajdz_metody_dla_sciezki(sciezka)
+        jesli inne_metody.dlg() > 0 {
+          niech odp_405 = Zubr::Odpowiedz.tekst(405, "Method Not Allowed")
+          odp_405.naglowek("Allow", polacz_metody(inne_metody))
+          zwroc odp_405
+        }
+
+        # Standard 404.
         jesli @handler_404 != nic {
           niech h = @handler_404
           zwroc h(zad)
@@ -184,6 +211,30 @@ modul Zubr {
           jesli parts.dlg() >= 2 i parts[1] == sciezka to zwroc prawda
         }
         zwroc falsz
+      }
+
+      prywatna funkcja znajdz_metody_dla_sciezki(sciezka) {
+        niech metody = []
+
+        # Sprawdź statyczne — iteruj po kluczach hasha.
+        niech klucze = Json.klucze(@statyczne)
+        dla niech k = 0; klucze.dlg(); 1 {
+          niech kl = klucze[k]
+          niech parts = kl.rozdziel(" ")
+          jesli parts.dlg() >= 2 i parts[1] == sciezka {
+            metody << parts[0]
+          }
+        }
+        zwroc metody
+      }
+
+      prywatna funkcja polacz_metody(lista) {
+        jesli lista.dlg() == 0 to zwroc ""
+        niech wynik = lista[0]
+        dla niech k = 1; lista.dlg(); 1 {
+          wynik = wynik + ", " + lista[k]
+        }
+        zwroc wynik
       }
     }
   }

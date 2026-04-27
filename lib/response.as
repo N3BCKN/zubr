@@ -25,6 +25,11 @@ modul Zubr {
       zwroc sam
     }
 
+    funkcja ustaw_tresc(s) {
+      @tresc = s
+      zwroc sam
+    }
+
     funkcja zamknij() {
       @zamknij_polaczenie = prawda
       zwroc sam
@@ -39,7 +44,7 @@ modul Zubr {
         @naglowki["Content-Length"] = @tresc.dlg().napis()
       }
       jesli @naglowki["Date"] == nic {
-        @naglowki["Date"] = Czas.teraz().httpdate()
+        @naglowki["Date"] = Zubr::_data_cache().teraz()
       }
       jesli @naglowki["Server"] == nic {
         @naglowki["Server"] = "Zubr/1.0"
@@ -90,5 +95,39 @@ modul Zubr {
     statyczna funkcja brak_zawartosci() {
       zwroc Odpowiedz.nowy(204, "")
     }
+
+    statyczna funkcja plik(sciezka) {
+      jesli !Plik.istnieje(sciezka) to zwroc Odpowiedz.tekst(404, "Not Found")
+      jesli Plik.czy_katalog(sciezka) to zwroc Odpowiedz.tekst(403, "Forbidden")
+
+      niech tresc = Plik.czytaj(sciezka)
+      niech mime = Zubr::Codes::mime_z_rozszerzenia(Plik.rozszerzenie(sciezka))
+      niech o = Odpowiedz.nowy(200, tresc)
+      o.ustaw_typ(mime)
+      zwroc o
+    }
+  }
+
+  klasa _DataCache {
+    funkcja konstruktor() {
+      niech @ostatni_sek = 0
+      niech @ostatni_str = ""
+    }
+
+    funkcja teraz() {
+      niech sek = Czas.stempel()
+      jesli sek == @ostatni_sek to zwroc @ostatni_str
+      @ostatni_sek = sek
+      @ostatni_str = Czas.teraz().httpdate()
+      zwroc @ostatni_str
+    }
+  }
+
+  funkcja _init_data_cache() {
+    globalna niech _DC = _DataCache.nowy()
+  }
+
+  funkcja _data_cache() {
+    zwroc _DC
   }
 }
