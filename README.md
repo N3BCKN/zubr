@@ -158,10 +158,10 @@ For a full working example with auth, CRUD, persistence, and a vanilla-JS fronte
 Full reference documentation is in [`docs/`](docs/):
 
 - **[Tutorial](docs/tutorial.md)** — Build your first API step by step
-- **[Server API](docs/reference-server.md)** — `Zubr::Serwer`, routing, lifecycle, configuration
-- **[Request & Response](docs/reference-request-response.md)** — `Zadanie`, `Odpowiedz`, factories, content negotiation, streaming
-- **[Middleware](docs/reference-middleware.md)** — Built-in middleware and writing your own
-- **[Sessions & Cookies](docs/reference-sessions-cookies.md)** — Cookie API and signed sessions
+- **[Server API](docs/server.md)** — `Zubr::Serwer`, routing, lifecycle, configuration
+- **[Request & Response](requestresponse.md)** — `Zadanie`, `Odpowiedz`, factories, content negotiation, streaming
+- **[Middleware](docs/middleware.md)** — Built-in middleware and writing your own
+- **[Sessions & Cookies](docs/cookies.md)** — Cookie API and signed sessions
 
 ## Architecture
 
