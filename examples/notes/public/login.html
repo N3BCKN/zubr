@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login - Notes</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="subtitle">Sign in to your notes</p>
+
+  <div class="auth-error" id="error"></div>
+
+  <div class="field">
+    <label for="email">Email</label>
+    <input type="email" id="email" autocomplete="email" autofocus required>
+  </div>
+
+  <div class="field">
+    <label for="haslo">Password</label>
+    <input type="password" id="haslo" autocomplete="current-password" required>
+  </div>
+
+  <button type="button" class="btn-primary" id="submit">Sign in</button>
+
+  <div class="switch">
+    No account yet? <a href="/rejestracja">Sign up</a>
+  </div>
+</div>
+
+<script>
+const errorBox = document.getElementById('error');
+const emailInput = document.getElementById('email');
+const hasloInput = document.getElementById('haslo');
+const submitBtn = document.getElementById('submit');
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('visible');
+}
+
+function clearError() {
+  errorBox.classList.remove('visible');
+}
+
+async function login() {
+  clearError();
+  const email = emailInput.value.trim();
+  const haslo = hasloInput.value;
+  if (!email || !haslo) {
+    showError('Fill in both fields');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, haslo: haslo })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      let msg = 'Login error';
+      if (data.bledy && data.bledy[0]) msg = data.bledy[0].wiadomosc;
+      showError(msg);
+    }
+  } catch (e) {
+    showError('Cannot connect to server');
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+submitBtn.addEventListener('click', login);
+
+const inputs = [emailInput, hasloInput];
+for (let i = 0; i < inputs.length; i++) {
+  inputs[i].addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      login();
+    }
+  });
+}
+</script>
+</body>
+</html>

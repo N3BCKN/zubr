@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign up - Notes</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <h1>Create account</h1>
+  <p class="subtitle">Start taking notes in 30 seconds</p>
+
+  <div class="auth-error" id="error"></div>
+
+  <div class="field">
+    <label for="nazwa">Name</label>
+    <input type="text" id="nazwa" autocomplete="name" autofocus required>
+  </div>
+
+  <div class="field">
+    <label for="email">Email</label>
+    <input type="email" id="email" autocomplete="email" required>
+  </div>
+
+  <div class="field">
+    <label for="haslo">Password (min. 8 chars)</label>
+    <input type="password" id="haslo" autocomplete="new-password" required>
+  </div>
+
+  <button type="button" class="btn-primary" id="submit">Sign up</button>
+
+  <div class="switch">
+    Already have an account? <a href="/login">Sign in</a>
+  </div>
+</div>
+
+<script>
+const errorBox = document.getElementById('error');
+const nazwaInput = document.getElementById('nazwa');
+const emailInput = document.getElementById('email');
+const hasloInput = document.getElementById('haslo');
+const submitBtn = document.getElementById('submit');
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('visible');
+}
+
+function showErrors(bledy) {
+  if (!bledy || bledy.length === 0) {
+    showError('Registration error');
+    return;
+  }
+  const messages = [];
+  for (let i = 0; i < bledy.length; i++) {
+    messages.push(bledy[i].wiadomosc);
+  }
+  showError(messages.join(' - '));
+}
+
+function clearError() {
+  errorBox.classList.remove('visible');
+}
+
+async function rejestruj() {
+  clearError();
+  const nazwa = nazwaInput.value.trim();
+  const email = emailInput.value.trim();
+  const haslo = hasloInput.value;
+
+  if (!nazwa || !email || !haslo) {
+    showError('Fill in all fields');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  try {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nazwa: nazwa, email: email, haslo: haslo })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      showErrors(data.bledy);
+    }
+  } catch (e) {
+    showError('Cannot connect to server');
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+submitBtn.addEventListener('click', rejestruj);
+
+const inputs = [nazwaInput, emailInput, hasloInput];
+for (let i = 0; i < inputs.length; i++) {
+  inputs[i].addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      rejestruj();
+    }
+  });
+}
+</script>
+</body>
+</html>

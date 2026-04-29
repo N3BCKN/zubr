@@ -1,21 +1,33 @@
 import("../lib/zubr")
-import("socket")
 
-funkcja dispatcher(zad) {
-  zwroc Zubr::Odpowiedz.tekst(200, "Hello from Zubr!\n")
-}
+niech serwer = Zubr::Serwer.nowy(8080)
 
-funkcja glowna() {
-  niech port = 8080
-  niech srv = SerwerTcp.nowy(port, "127.0.0.1")
-  niech config = Zubr::Polaczenie::Konfiguracja.nowy()
-  config.ustaw_logger(Zubr::Logger::domyslny())
+serwer.middleware(Zubr::Middleware::Log::cichy())
 
-  config.logger().info("Zubr listening on 127.0.0.1:" + port.napis())
+serwer.get("/", fn(zad) {
+  zwroc Zubr::Odpowiedz.tekst(200, "Hello, World!\n")
+})
 
-  srv.uruchom_petle(fn(klient) {
-    Zubr::Polaczenie::obsluz(klient, dispatcher, config)
+serwer.get("/json", fn(zad) {
+  zwroc Zubr::Odpowiedz.json(200, {
+    "message": "Hello",
+    "timestamp": Czas.stempel()
   })
-}
+})
 
-glowna()
+
+serwer.get("/users/:id", fn(zad) {
+  zwroc Zubr::Odpowiedz.json(200, {
+    "id": zad.parametry()["id"]
+  })
+})
+
+
+serwer.post("/echo", fn(zad) {
+  niech dane = zad.dane()
+  jesli dane == nic to dane = {}
+  zwroc Zubr::Odpowiedz.json(200, dane)
+})
+
+serwer.start()
+

@@ -12,7 +12,6 @@ modul Zubr {
           niech ms_zaokr = Mat.zaokraglij(ms, 2)
 
           niech linia = Czas.teraz().format("[%H:%M:%S]") + " " + zad.metoda() + " " + zad.sciezka_surowa() + " -> " + odp.status().napis() + " " + ms_zaokr.napis() + "ms"
-          pokazl linia
           zwroc odp
         }
       }

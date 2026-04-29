@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notatki</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">📝 Notatki</div>
+      <div class="user">
+        <span class="user-name" id="userName">…</span>
+        <button class="btn-secondary" id="logoutBtn">Wyloguj</button>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <input type="text" class="search-input" id="searchInput" placeholder="Szukaj...">
+        <input type="text" class="tag-filter" id="tagFilter" placeholder="Filtruj po tagu">
+        <button class="btn-new" id="newNoteBtn">+ Nowa notatka</button>
+      </div>
+      <div class="notes-list" id="notesList">
+        <div class="notes-empty">Ładowanie...</div>
+      </div>
+    </aside>
+
+    <main class="editor">
+      <div class="editor-toolbar">
+        <span class="editor-status" id="status">Brak wybranej notatki</span>
+        <div class="editor-actions" id="editorActions" style="display: none;">
+          <button class="btn-secondary" id="saveBtn">Zapisz</button>
+          <button class="btn-danger" id="deleteBtn">Usuń</button>
+        </div>
+      </div>
+      <div class="editor-body" id="editorBody">
+        <div class="editor-empty">Wybierz notatkę z listy lub utwórz nową</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/app.js"></script>
+  </body>
+</html>

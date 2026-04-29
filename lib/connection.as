@@ -8,7 +8,7 @@ modul Zubr {
     klasa Konfiguracja {
       funkcja konstruktor() {
         niech @limity = Zubr::Parser::Limity.nowy()
-        niech @max_requestow_keepalive = 100
+        niech @max_requestow_keepalive = 1000
         niech @logger = nic
       }
 

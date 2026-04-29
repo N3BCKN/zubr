@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head><title>Tasks</title></head>
+<body>
+<h1>My tasks</h1>
+<ul id="list"></ul>
+<form id="form" autocomplete="off">
+  <input id="title" placeholder="New task" required>
+  <button type="button" id="add">Add</button>
+</form>
+<script>
+async function refresh() {
+  const tasks = await (await fetch('/tasks')).json();
+  document.getElementById('list').innerHTML = tasks
+    .map(t => `<li>${t.tytul}${t.ukonczone ? ' ✓' : ''}</li>`)
+    .join('');
+}
+
+async function dodaj() {
+  const input = document.getElementById('title');
+  const title = input.value.trim();
+  if (!title) return;
+  input.value = '';
+  await fetch('/tasks', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({tytul: title})
+  });
+  refresh();
+}
+
+document.getElementById('add').addEventListener('click', dodaj);
+
+
+document.getElementById('title').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    dodaj();
+  }
+});
+
+
+document.getElementById('form').addEventListener('submit', e => e.preventDefault());
+
+refresh();
+</script>
+</body>
+</html>
