@@ -1,6 +1,6 @@
 # Zubr
 
-> A micro-framework for building HTTP services in [AlexScript](https://github.com/alexscript) — Polish-syntax language, Sinatra-style API.
+> A micro-framework for building HTTP services in [AlexScript](https://github.com/N3BCKN/alexscript) — Polish-syntax language, Sinatra-style API.
 
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)]()
 [![Language](https://img.shields.io/badge/language-AlexScript-blue.svg)]()
